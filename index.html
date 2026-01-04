@@ -1,0 +1,892 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>英语音标发音卡片</title>
+
+     <!-- PWA配置 -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#4a90e2">
+    
+    <!-- iOS支持 -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="单元音1">
+    <link rel="apple-touch-icon" href="images/icon-192.png">  <!-- ✅ 正确路径 -->
+    
+    <!-- Android Chrome -->
+    <meta name="mobile-web-app-capable" content="yes">
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: rgba(255, 255, 255, 0.98);
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            position: relative;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 3px solid #e74c3c;
+        }
+
+        h1 {
+            color: #2c3e50;
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+        }
+
+        .subtitle {
+            color: #7f8c8d;
+            font-size: 1.2rem;
+            margin-top: 10px;
+        }
+
+        .group-container {
+            margin-bottom: 50px;
+        }
+
+        .group-header {
+            background: linear-gradient(to right, #e74c3c, #ff7979);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 5px 15px rgba(231, 76, 60, 0.2);
+        }
+
+        .group-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .group-subtitle {
+            font-size: 1rem;
+            opacity: 0.9;
+        }
+
+        .group-1 .group-header .group-title:before {
+            content: "😣 ";
+        }
+
+        .group-2 .group-header {
+            background: linear-gradient(to right, #00b894, #55efc4);
+        }
+
+        .group-2 .group-header .group-title:before {
+            content: "😊 ";
+        }
+
+        .group-3 .group-header {
+            background: linear-gradient(to right, #fdcb6e, #ffeaa7);
+        }
+
+        .group-3 .group-header .group-title:before {
+            content: "👄 ";
+        }
+
+        /* 简化卡片布局 */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .cards-grid {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+        }
+
+        /* 极简卡片设计 */
+        .phonetic-card {
+            position: relative;
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            /*height: 420px;  增加高度为进度条留空间 */
+
+             /* 使用宽高比容器 */
+            aspect-ratio: 1170 / (1600 + 80); /* 图片高度+进度条高度 */
+
+            cursor: default;
+        }
+
+        .phonetic-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
+        }
+
+        /* 卡片内容区域 */
+        .card-content {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* 图片容器 - 添加点击区域限制 */
+        .image-container {
+            width: 100%;
+            height: calc(100% - 80px); /* 图片区域高度，避开底部区域 */
+            position: relative;
+            cursor: pointer;
+            overflow: hidden;
+        }
+
+        .card-image {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            background: #fefefe;
+            transform-style: preserve-3d;
+            padding: 10px;
+        }
+
+        /* 为翻转后的图片添加修正 */
+        .card-image.flipped {
+            transform: rotateY(180deg) scaleX(-1); /* 添加 scaleX(-1) 修正镜像 */
+        }
+
+        /* 进度条容器 - 放在卡片底部，不可点击翻转 */
+        .audio-progress-container {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 80px; /* 增加高度，确保有足够的非点击区域 */
+            background: rgba(248, 249, 250, 0.95);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 0 15px;
+            z-index: 15;
+            border-top: 1px solid #e9ecef;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.3s ease;
+            cursor: default; /* 进度条区域默认光标 */
+        }
+
+        .audio-progress-container.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* 进度条样式 */
+        .audio-progress {
+            width: 100%;
+            height: 6px;
+            background: rgba(189, 195, 199, 0.3);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-bottom: 8px;
+            cursor: pointer; /* 只有进度条本身可点击 */
+            position: relative;
+        }
+
+        .audio-progress:hover {
+            height: 8px;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(to right, #3498db, #2ecc71);
+            width: 0%;
+            transition: width 0.3s ease;
+            border-radius: 3px;
+        }
+
+        /* 时间显示 */
+        .time-display {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.75rem;
+            color: #7f8c8d;
+            user-select: none; /* 防止文字被选中 */
+        }
+
+        .current-time, .total-time {
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-weight: 600;
+        }
+
+        /* 悬浮播放按钮 - 固定在右下角 */
+        .play-btn-overlay {
+            position: absolute;
+            bottom: 90px; /* 在进度条上方更高位置 */
+            right: 15px;
+            background: rgba(52, 152, 219, 0.85);
+            color: white;
+            border: none;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 20;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+            font-size: 1.3rem;
+        }
+
+        .play-btn-overlay:hover {
+            background: rgba(41, 128, 185, 0.95);
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(41, 128, 185, 0.4);
+        }
+
+        .play-btn-overlay.playing {
+            background: rgba(231, 76, 60, 0.9);
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3);
+            }
+            50% {
+                box-shadow: 0 4px 20px rgba(231, 76, 60, 0.6);
+            }
+            100% {
+                box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3);
+            }
+        }
+
+        /* 图片翻转提示（可选，放在图片区域右上角） */
+        .flip-hint {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            color: #636e72;
+            /*display: flex;*/
+            display: none; /* 改为 none 让提示消失 */
+            align-items: center;
+            gap: 5px;
+            z-index: 10;
+            pointer-events: none; /* 提示文字不响应点击 */
+            opacity: 0.7;
+            transition: opacity 0.3s ease;
+        }
+
+        .image-container:hover .flip-hint {
+            opacity: 1;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 50px;
+            color: #7f8c8d;
+            font-size: 0.9rem;
+            padding-top: 20px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        /* 图片加载失败样式 */
+        .image-error {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #636e72;
+            font-size: 1rem;
+            text-align: center;
+            padding: 30px;
+            background: #f8f9fa;
+        }
+
+        /* 安全的点击区域分隔线（可选，用于视觉区分） */
+        .safe-area-line {
+            position: absolute;
+            bottom: 80px;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(to right, transparent, rgba(0, 0, 0, 0.1), transparent);
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        @media (max-width: 480px) {
+            .phonetic-card {
+                height: 380px;
+            }
+            
+            .image-container {
+                height: calc(100% - 70px);
+            }
+            
+            .audio-progress-container {
+                height: 70px;
+                padding: 0 10px;
+            }
+            
+            .play-btn-overlay {
+                bottom: 80px;
+                width: 45px;
+                height: 45px;
+                font-size: 1.2rem;
+            }
+            
+            .time-display {
+                font-size: 0.7rem;
+            }
+            
+            .flip-hint {
+                font-size: 0.7rem;
+                padding: 3px 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>🔊 英语单元音发音卡片</h1>
+        <p class="subtitle">点击图片翻转卡片，点击按钮播放发音</p>
+    </div>
+
+    <!-- 第一组：两难音组 -->
+    <div class="group-container group-1">
+        <div class="group-header">
+            <div>
+                <div class="group-title">两难音组</div>
+                <div class="group-subtitle">与拼音发音不同，需要重点练习 /æ/ /e/ /ɑː/ /ʌ/</div>
+            </div>
+        </div>
+        <div class="cards-grid" id="group1Cards">
+            <!-- 卡片将通过JavaScript动态生成 -->
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>英语单元音发音学习系统 · 极简设计：图片+音频</p>
+        <p>点击图片翻转，点击悬浮按钮播放发音</p>
+    </div>
+</div>
+
+<script>
+    // 极简音标数据 - 只保留图片和音频路径
+    const phoneticData = {
+        group1: [
+            {
+                frontImage: "images/挨.jpg",      // 正面图片
+                backImage: "images/挨单词.jpg",   // 背面图片
+                audio: "audio/ant.mp3"         // 音频文件
+            },
+            {
+                frontImage: "images/哎.jpg",   // 您需要提供
+                backImage: "images/哎单词.jpg",    // 您需要提供
+                audio: "audio/head.mp3"             // 您需要提供
+            },
+            {
+                frontImage: "images/啊--.jpg",   // 您需要提供
+                backImage: "images/啊--单词.jpg",    // 您需要提供
+                audio: "audio/father.mp3"             // 您需要提供
+            },
+            {
+                frontImage: "images/啊.jpg",   // 您需要提供
+                backImage: "images/啊单词.jpg",    // 您需要提供
+                audio: "audio/son.mp3"             // 您需要提供
+            }
+        ]
+    };
+
+    // 音频管理
+    let currentAudio = null;
+    let currentPlayingCardId = null;
+
+    // 初始化页面
+    function initPage() {
+        renderGroupCards('group1Cards', phoneticData.group1);
+        setupImageErrorHandling();
+    }
+
+    // 渲染卡片
+    function renderGroupCards(containerId, cardsData) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+
+        container.innerHTML = '';
+
+        cardsData.forEach((phonetic, index) => {
+            const cardId = `card-${index}`;
+            const cardHtml = `
+                <div class="phonetic-card" id="${cardId}">
+                    <div class="card-content">
+                        <!-- 图片容器 - 限制点击区域 -->
+                        <div class="image-container" id="image-container-${cardId}">
+                            <img src="${phonetic.frontImage}"
+                                 alt="音标卡片"
+                                 class="card-image"
+                                 id="image-${cardId}">
+                            <div class="flip-hint">
+                                <span>🔄</span> 点击翻转
+                            </div>
+                        </div>
+                        
+                        <!-- 安全的点击区域分隔线（可选） -->
+                        <div class="safe-area-line"></div>
+                        
+                        <!-- 进度条容器 -->
+                        <div class="audio-progress-container" id="progress-container-${cardId}">
+                            <div class="audio-progress" id="progress-${cardId}">
+                                <div class="progress-bar" id="progress-bar-${cardId}"></div>
+                            </div>
+                            <div class="time-display">
+                                <span class="current-time" id="current-time-${cardId}">0:00</span>
+                                <span class="total-time" id="total-time-${cardId}">0:00</span>
+                            </div>
+                        </div>
+                        
+                        <button class="play-btn-overlay" id="play-btn-${cardId}">
+                            🔊
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            container.insertAdjacentHTML('beforeend', cardHtml);
+
+            // 绑定事件
+            const imageContainer = document.getElementById(`image-container-${cardId}`);
+            const imageElement = document.getElementById(`image-${cardId}`);
+            const playButton = document.getElementById(`play-btn-${cardId}`);
+            const progressElement = document.getElementById(`progress-${cardId}`);
+
+            // 点击图片区域翻转
+            imageContainer.addEventListener('click', function (e) {
+                // 确保点击的是图片容器本身，不是子元素
+                if (e.target === this || e.target === imageElement) {
+                    toggleImageFlip(cardId);
+                }
+            });
+
+            // 点击播放按钮
+            playButton.addEventListener('click', function (e) {
+                e.stopPropagation();
+                playAudio(cardId, phonetic.audio);
+            });
+
+            // 点击进度条跳转
+            progressElement.addEventListener('click', function (e) {
+                e.stopPropagation(); // 阻止事件冒泡到图片容器
+                if (currentAudio && currentPlayingCardId === cardId) {
+                    const rect = this.getBoundingClientRect();
+                    const clickX = e.clientX - rect.left;
+                    const width = rect.width;
+                    const percent = Math.min(Math.max(clickX / width, 0), 1);
+                    
+                    currentAudio.currentTime = percent * currentAudio.duration;
+                }
+            });
+        });
+    }
+
+    // 翻转图片
+    function toggleImageFlip(cardId) {
+        const image = document.getElementById(`image-${cardId}`);
+        const imageContainer = document.getElementById(`image-container-${cardId}`);
+
+        if (!image || !imageContainer) return;
+
+        const phonetic = findPhoneticById(cardId);
+        if (!phonetic) return;
+
+        if (image.classList.contains('flipped')) {
+            // 翻回正面
+            image.classList.remove('flipped');
+            setTimeout(() => {
+                image.src = phonetic.frontImage;
+            }, 400);
+        } else {
+            // 翻到背面
+            image.classList.add('flipped');
+            setTimeout(() => {
+                image.src = phonetic.backImage;
+            }, 400);
+        }
+    }
+
+    // 根据ID查找音标数据
+    function findPhoneticById(cardId) {
+        const index = parseInt(cardId.split('-')[1]);
+        return phoneticData.group1[index];
+    }
+
+    // 播放音频 - 带进度条版本
+    function playAudio(cardId, audioPath) {
+        const playBtn = document.getElementById(`play-btn-${cardId}`);
+        const progressContainer = document.getElementById(`progress-container-${cardId}`);
+        const progressBar = document.getElementById(`progress-bar-${cardId}`);
+        const currentTimeDisplay = document.getElementById(`current-time-${cardId}`);
+        const totalTimeDisplay = document.getElementById(`total-time-${cardId}`);
+
+        // 如果正在播放当前卡片，则停止
+        if (currentPlayingCardId === cardId && currentAudio && !currentAudio.paused) {
+            stopAudio(cardId);
+            return;
+        }
+
+        // 如果正在播放其他卡片，先停止
+        if (currentPlayingCardId && currentPlayingCardId !== cardId) {
+            stopAudio(currentPlayingCardId);
+        }
+
+        // 更新UI状态
+        playBtn.classList.add('playing');
+        playBtn.textContent = '⏸️';
+        progressContainer.classList.add('active');
+
+        // 创建音频对象
+        currentAudio = new Audio(audioPath);
+        currentPlayingCardId = cardId;
+
+        // 设置初始音量
+        currentAudio.volume = 0.7;
+
+        // 时间格式化函数
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+        }
+
+        // 更新进度条和时间显示
+        function updateProgress() {
+            if (!currentAudio || currentAudio.readyState < 2) return;
+
+            const currentTime = currentAudio.currentTime;
+            const duration = currentAudio.duration || 1;
+            const progressPercent = (currentTime / duration) * 100;
+
+            progressBar.style.width = `${progressPercent}%`;
+            currentTimeDisplay.textContent = formatTime(currentTime);
+            
+            // 只在开始时更新总时间一次
+            if (totalTimeDisplay.textContent === '0:00') {
+                totalTimeDisplay.textContent = formatTime(duration);
+            }
+        }
+
+        // 简单的事件处理
+        currentAudio.oncanplaythrough = () => {
+            // 开始进度更新
+            currentAudio.ontimeupdate = updateProgress;
+            
+            // 设置总时间
+            totalTimeDisplay.textContent = formatTime(currentAudio.duration);
+            
+            currentAudio.play().catch(error => {
+                console.error('播放失败:', error);
+                resetAudioState(cardId);
+            });
+        };
+
+        currentAudio.onerror = (e) => {
+            console.error('音频错误:', e);
+            resetAudioState(cardId);
+        };
+
+        currentAudio.onended = () => {
+            resetAudioState(cardId);
+            // 3秒后隐藏进度条
+            setTimeout(() => {
+                if (currentPlayingCardId !== cardId) {
+                    progressContainer.classList.remove('active');
+                    progressBar.style.width = '0%';
+                    currentTimeDisplay.textContent = '0:00';
+                    totalTimeDisplay.textContent = '0:00';
+                }
+            }, 3000);
+        };
+
+        // 开始加载
+        currentAudio.load();
+    }
+
+    // 停止音频
+    function stopAudio(cardId) {
+        if (currentAudio) {
+            currentAudio.pause();
+            currentAudio.currentTime = 0;
+            currentAudio = null;
+        }
+
+        resetAudioState(cardId);
+
+        const progressContainer = document.getElementById(`progress-container-${cardId}`);
+        const progressBar = document.getElementById(`progress-bar-${cardId}`);
+        const currentTimeDisplay = document.getElementById(`current-time-${cardId}`);
+        const totalTimeDisplay = document.getElementById(`total-time-${cardId}`);
+
+        if (progressContainer) {
+            progressContainer.classList.remove('active');
+        }
+
+        if (progressBar) {
+            progressBar.style.width = '0%';
+        }
+
+        if (currentTimeDisplay) {
+            currentTimeDisplay.textContent = '0:00';
+        }
+        
+        if (totalTimeDisplay) {
+            totalTimeDisplay.textContent = '0:00';
+        }
+    }
+
+    // 重置音频状态
+    function resetAudioState(cardId) {
+        const playBtn = document.getElementById(`play-btn-${cardId}`);
+        if (playBtn) {
+            playBtn.classList.remove('playing');
+            playBtn.textContent = '🔊';
+        }
+
+        if (currentPlayingCardId === cardId) {
+            currentPlayingCardId = null;
+        }
+    }
+
+    // 设置图片加载失败处理
+    function setupImageErrorHandling() {
+        document.addEventListener('error', function (e) {
+            if (e.target.tagName === 'IMG' && e.target.classList.contains('card-image')) {
+                console.error('图片加载失败:', e.target.src);
+
+                const container = e.target.parentElement;
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'image-error';
+                errorDiv.innerHTML = `
+                    <div style="font-size: 2rem; margin-bottom: 10px;">📷</div>
+                    <div>图片加载失败</div>
+                `;
+
+                e.target.style.display = 'none';
+                container.appendChild(errorDiv);
+            }
+        }, true);
+    }
+
+    // 页面加载完成后初始化
+    document.addEventListener('DOMContentLoaded', initPage);
+
+    // 在现有的JavaScript代码后添加
+    // Service Worker 注册和管理
+    if ('serviceWorker' in navigator) {
+      let refreshing = false;
+      
+      // 页面加载后注册
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('service-worker.js')
+          .then(registration => {
+            console.log('✅ Service Worker 注册成功，作用域:', registration.scope);
+            
+            // 检查更新
+            registration.addEventListener('updatefound', () => {
+              const newWorker = registration.installing;
+              console.log('🔄 发现新版本 Service Worker');
+              
+              newWorker.addEventListener('statechange', () => {
+                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                  // 新版本已安装，提示用户刷新
+                  showUpdateNotification();
+                }
+              });
+            });
+            
+            // 监听控制器变化
+            navigator.serviceWorker.addEventListener('controllerchange', () => {
+              if (!refreshing) {
+                refreshing = true;
+                console.log('🎉 新Service Worker已激活，页面即将刷新...');
+                window.location.reload();
+              }
+            });
+          })
+          .catch(error => {
+            console.error('❌ Service Worker 注册失败:', error);
+          });
+      });
+      
+      // 手动预缓存函数
+      function precacheAll() {
+        if (navigator.serviceWorker.controller) {
+          navigator.serviceWorker.controller.postMessage({
+            action: 'precacheResources'
+          });
+        }
+      }
+      
+      // 手动更新函数
+      function updateServiceWorker() {
+        if (navigator.serviceWorker.controller) {
+          navigator.serviceWorker.controller.postMessage({
+            action: 'skipWaiting'
+          });
+        }
+      }
+      
+      // 显示更新通知
+      function showUpdateNotification() {
+        // 创建更新提示
+        const updateDiv = document.createElement('div');
+        updateDiv.id = 'update-notification';
+        updateDiv.style.cssText = `
+          position: fixed;
+          bottom: 20px;
+          left: 50%;
+          transform: translateX(-50%);
+          background: #2c3e50;
+          color: white;
+          padding: 12px 20px;
+          border-radius: 10px;
+          z-index: 10000;
+          display: flex;
+          align-items: center;
+          gap: 15px;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+          animation: slideUp 0.3s ease;
+        `;
+        
+        updateDiv.innerHTML = `
+          <span>🔄 新版本可用</span>
+          <button id="refreshBtn" style="
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 6px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+          ">立即更新</button>
+        `;
+        
+        document.body.appendChild(updateDiv);
+        
+        document.getElementById('refreshBtn').addEventListener('click', () => {
+          updateServiceWorker();
+        });
+      }
+      
+      // 添加动画
+      const style = document.createElement('style');
+      style.textContent = `
+        @keyframes slideUp {
+          from { transform: translateX(-50%) translateY(100%); opacity: 0; }
+          to { transform: translateX(-50%) translateY(0); opacity: 1; }
+        }
+      `;
+      document.head.appendChild(style);
+      
+      // 页面加载完成后，可以手动触发预缓存
+      setTimeout(() => {
+        // 可以根据需要手动调用
+        // precacheAll();
+      }, 2000);
+    }
+
+        // PWA调试脚本
+    console.log('=== PWA调试信息 ===');
+    console.log('当前URL:', window.location.href);
+    console.log('当前路径:', window.location.pathname);
+    console.log('项目根路径:', window.location.origin + window.location.pathname.split('/').slice(0, -1).join('/'));
+
+    // 检查关键文件
+    async function checkFile(url) {
+        try {
+            const response = await fetch(url);
+            console.log(`${response.ok ? '✅' : '❌'} ${url} - HTTP ${response.status}`);
+            return response.ok;
+        } catch (error) {
+            console.log(`❌ ${url} - 无法访问: ${error.message}`);
+            return false;
+        }
+    }
+
+    // 页面加载后检查文件
+    setTimeout(async () => {
+        console.log('=== 检查关键文件 ===');
+        
+        const filesToCheck = [
+            'manifest.json',
+            'service-worker.js',
+            'images/icon-192.png',
+            'images/icon-512.png',
+            'images/挨.jpg',
+            'audio/ant.mp3'
+        ];
+        
+        for (const file of filesToCheck) {
+            await checkFile(file);
+        }
+        
+        console.log('=== 文件检查完成 ===');
+        
+        // 检查Service Worker注册
+        if ('serviceWorker' in navigator) {
+            const registration = await navigator.serviceWorker.getRegistration();
+            if (registration) {
+                console.log('✅ Service Worker已注册:', registration.scope);
+                console.log('✅ Service Worker状态:', registration.active ? '活跃' : '未活跃');
+            } else {
+                console.log('❌ Service Worker未注册');
+            }
+        }
+        
+        // 检查缓存
+        if ('caches' in window) {
+            const cacheNames = await caches.keys();
+            console.log('📦 缓存列表:', cacheNames);
+            
+            for (const cacheName of cacheNames) {
+                const cache = await caches.open(cacheName);
+                const keys = await cache.keys();
+                console.log(`  缓存 "${cacheName}" 中有 ${keys.length} 个文件`);
+            }
+        }
+    }, 2000);
+</script>
+</body>
+</html>

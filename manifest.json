@@ -1,0 +1,26 @@
+{
+  "name": "单元音两难",
+  "short_name": "单元音1",
+  "description": "帮助学习英语音标的应用",
+  // "start_url": "/单元音两难/index.html", // 你的主页面路径
+  "display": "standalone", // 以独立应用形式打开，隐藏浏览器地址栏
+  "start_url": "./",  // 使用相对路径
+  "scope": "./",
+  
+  "background_color": "#f0f8ff",
+  "theme_color": "#4a90e2",
+  "icons": [
+    {
+      "src": "images/icon-192.png", // 需要你准备一个192x192像素的图标
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "images/icon-512.png", // 需要你准备一个512x512像素的图标
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ]
+}
